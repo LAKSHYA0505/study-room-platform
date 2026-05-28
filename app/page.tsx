@@ -1,6 +1,11 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "Study Room Platform | Collaborative Focus Rooms"
+};
 
 export default function HomePage() {
   return (
@@ -26,8 +31,8 @@ export default function HomePage() {
         <div className="rounded-lg border bg-card p-6 shadow-sm">
           <div className="grid gap-4">
             <div className="rounded-md bg-muted p-4">
-              <p className="text-sm font-medium text-muted-foreground">Phase 1</p>
-              <p className="mt-1 text-xl font-semibold">Auth foundation</p>
+              <p className="text-sm font-medium text-muted-foreground">Realtime study</p>
+              <p className="mt-1 text-xl font-semibold">Rooms, chat, timers, and progress</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-md border p-4">
@@ -36,7 +41,7 @@ export default function HomePage() {
               </div>
               <div className="rounded-md border p-4">
                 <p className="text-2xl font-semibold">Live</p>
-                <p className="text-sm text-muted-foreground">rooms coming next</p>
+                <p className="text-sm text-muted-foreground">collaboration</p>
               </div>
             </div>
           </div>

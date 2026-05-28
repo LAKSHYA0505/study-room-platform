@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { headers } from "next/headers";
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { joinRoom, leaveRoom } from "@/app/rooms/actions";
@@ -17,12 +18,38 @@ type RoomPageProps = {
   };
 };
 
+export const metadata: Metadata = {
+  title: "Room | Study Room Platform"
+};
+
 type Room = {
   id: string;
   name: string;
   subject: string | null;
   is_public: boolean | null;
   created_by: string | null;
+};
+
+type LeaderboardParticipantRow = {
+  user_id: string;
+  profiles:
+    | {
+        username: string;
+      }
+    | null
+    | Array<{
+        username: string;
+      }>;
+  study_sessions:
+    | {
+        room_id: string;
+        duration_seconds: number | null;
+      }
+    | null
+    | Array<{
+        room_id: string;
+        duration_seconds: number | null;
+      }>;
 };
 
 type MemberRow = {
@@ -38,6 +65,14 @@ type MemberRow = {
 
 function getProfile(member: MemberRow) {
   return Array.isArray(member.profiles) ? member.profiles[0] : member.profiles;
+}
+
+function getLeaderboardProfile(row: LeaderboardParticipantRow) {
+  return Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+}
+
+function getLeaderboardSession(row: LeaderboardParticipantRow) {
+  return Array.isArray(row.study_sessions) ? row.study_sessions[0] : row.study_sessions;
 }
 
 export default async function RoomDetailPage({ params, searchParams }: RoomPageProps) {
@@ -85,6 +120,10 @@ export default async function RoomDetailPage({ params, searchParams }: RoomPageP
     .select("username")
     .eq("id", user.id)
     .maybeSingle();
+  const { data: leaderboardRows } = await supabase
+    .from("session_participants")
+    .select("user_id, profiles(username), study_sessions(room_id, duration_seconds)")
+    .eq("study_sessions.room_id", params.id);
 
   const typedRoom = room as Room;
   const typedMembers = (members ?? []) as unknown as MemberRow[];
@@ -102,6 +141,28 @@ export default async function RoomDetailPage({ params, searchParams }: RoomPageP
     roomMembers.find((member) => member.userId === user.id)?.username ??
     user.email?.split("@")[0] ??
     "You";
+  const leaderboardTotals = new Map<string, { userId: string; username: string; totalSeconds: number }>();
+
+  for (const row of (leaderboardRows ?? []) as unknown as LeaderboardParticipantRow[]) {
+    const session = getLeaderboardSession(row);
+
+    if (!session || session.room_id !== params.id || !session.duration_seconds) {
+      continue;
+    }
+
+    const existing = leaderboardTotals.get(row.user_id);
+    const username = getLeaderboardProfile(row)?.username ?? "Unknown user";
+
+    leaderboardTotals.set(row.user_id, {
+      userId: row.user_id,
+      username: existing?.username ?? username,
+      totalSeconds: (existing?.totalSeconds ?? 0) + session.duration_seconds
+    });
+  }
+
+  const leaderboard = Array.from(leaderboardTotals.values())
+    .sort((a, b) => b.totalSeconds - a.totalSeconds)
+    .slice(0, 5);
 
   return (
     <main className="min-h-screen bg-background">
@@ -145,6 +206,7 @@ export default async function RoomDetailPage({ params, searchParams }: RoomPageP
           }}
           members={roomMembers}
           isCreator={typedRoom.created_by === user.id}
+          leaderboard={leaderboard}
         />
       </section>
     </main>

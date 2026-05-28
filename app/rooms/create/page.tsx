@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import { createRoom } from "@/app/rooms/actions";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,10 @@ const errorMessages: Record<string, string> = {
   "profile-failed": "Could not prepare your profile for room creation.",
   "create-failed": "Could not create the room.",
   "member-failed": "The room was created, but adding you as a member failed."
+};
+
+export const metadata: Metadata = {
+  title: "Create Room | Study Room Platform"
 };
 
 export default function CreateRoomPage({ searchParams }: CreateRoomPageProps) {

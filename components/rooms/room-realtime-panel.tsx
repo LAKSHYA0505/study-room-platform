@@ -14,6 +14,12 @@ type RoomMember = {
   username: string;
 };
 
+type LeaderboardEntry = {
+  userId: string;
+  username: string;
+  totalSeconds: number;
+};
+
 type CurrentUser = {
   id: string;
   username: string;
@@ -56,6 +62,7 @@ type RoomRealtimePanelProps = {
   currentUser: CurrentUser;
   members: RoomMember[];
   isCreator: boolean;
+  leaderboard: LeaderboardEntry[];
 };
 
 function getMessageUsername(message: MessageRow, memberNames: Map<string, string>) {
@@ -71,7 +78,18 @@ function formatMessageTime(timestamp: string) {
   }).format(new Date(timestamp));
 }
 
-export function RoomRealtimePanel({ roomId, inviteUrl, currentUser, members, isCreator }: RoomRealtimePanelProps) {
+function formatStudyHours(seconds: number) {
+  return `${(seconds / 3600).toFixed(1)} hrs`;
+}
+
+export function RoomRealtimePanel({
+  roomId,
+  inviteUrl,
+  currentUser,
+  members,
+  isCreator,
+  leaderboard
+}: RoomRealtimePanelProps) {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
@@ -311,6 +329,30 @@ export function RoomRealtimePanel({ roomId, inviteUrl, currentUser, members, isC
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">No members yet.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Leaderboard</CardTitle>
+            <CardDescription>Top studiers in this room by completed focus time.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {leaderboard.length ? (
+              <div className="space-y-3">
+                {leaderboard.map((entry, index) => (
+                  <div key={entry.userId} className="flex items-center justify-between rounded-md border p-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Badge variant={index === 0 ? "default" : "outline"}>{index + 1}</Badge>
+                      <span className="truncate font-medium">{entry.username}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">{formatStudyHours(entry.totalSeconds)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No completed study sessions yet.</p>
             )}
           </CardContent>
         </Card>

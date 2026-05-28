@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { joinRoom } from "@/app/rooms/actions";
@@ -12,6 +13,10 @@ type Room = {
   name: string;
   subject: string | null;
   created_at: string;
+};
+
+export const metadata: Metadata = {
+  title: "Rooms | Study Room Platform"
 };
 
 export default async function RoomsPage() {

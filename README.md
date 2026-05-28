@@ -1,21 +1,60 @@
 # Collaborative Study Room Platform
 
-Internship assessment project built with Next.js 14, TypeScript, Tailwind CSS, shadcn/ui-style components, and Supabase.
+A realtime study room platform for focused group study sessions. Users can sign up, create or join virtual rooms, chat with members, track online presence, run a synced Pomodoro timer, and review their study history from a personal dashboard.
 
-## Phase 1
+[Live Demo](YOUR_DEPLOYED_URL)
 
-- Next.js App Router scaffold
-- Tailwind CSS configuration
-- shadcn/ui component foundation
-- Supabase client helpers in `lib/supabase.ts`
-- Email/password signup and login pages
-- Profile row creation during signup
-- Protected route middleware for app pages
+## Features
 
-## Local Setup
+- Email and password authentication with protected routes
+- Supabase profile creation for each user
+- Public and private study rooms
+- Browse, create, join, leave, and invite users to rooms
+- Shareable invite links with automatic room joining
+- Realtime room chat powered by Supabase Realtime
+- Online presence indicators for room members
+- Synced Pomodoro timer with 25 minute work and 5 minute break cycles
+- Creator-only timer controls for Start, Pause, and Stop
+- Study session tracking with participants and durations
+- Dashboard with total study hours, weekly sessions, rooms joined, and recent sessions
+- Bonus room leaderboard ranking the top studiers by total study time
 
-1. Copy `.env.local.example` to `.env.local`.
-2. Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-3. Run the SQL from `supabase/schema.sql` in your Supabase project's SQL Editor.
-4. Install dependencies with `npm install`.
-5. Run the app with `npm run dev`.
+## Tech Stack
+
+- Next.js 14 App Router
+- TypeScript
+- Tailwind CSS
+- shadcn/ui-style components
+- Supabase Auth
+- Supabase PostgreSQL
+- Supabase Realtime
+- Vercel deployment target
+
+## Setup
+
+1. Clone the repository.
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Create `.env.local` in the project root:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+4. Run the SQL in `supabase/schema.sql` inside your Supabase SQL Editor.
+5. Start the development server:
+
+```bash
+npm run dev
+```
+
+6. Open `http://localhost:3000`.
+
+## Screenshots
+
+Screenshots for authentication, room management, realtime chat, synced Pomodoro sessions, dashboard analytics, and leaderboard views will be added here.

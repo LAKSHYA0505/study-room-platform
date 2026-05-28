@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
+
 import { AuthForm } from "@/components/auth/auth-form";
+
+export const metadata: Metadata = {
+  title: "Log In | Study Room Platform"
+};
 
 export default function LoginPage() {
   return (
