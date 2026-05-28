@@ -6,7 +6,7 @@ import type { User } from "@supabase/supabase-js";
 
 import { createSupabaseRouteHandlerClient } from "@/lib/supabase";
 
-type SupabaseServerClient = ReturnType<typeof createSupabaseRouteHandlerClient>;
+type SupabaseServerClient = Awaited<ReturnType<typeof createSupabaseRouteHandlerClient>>;
 
 function redirectWithRoomError(code: string, message?: string): never {
   const params = new URLSearchParams({ error: code });
@@ -55,7 +55,7 @@ async function ensureProfile(supabase: SupabaseServerClient, user: User) {
 }
 
 async function requireUser() {
-  const supabase = createSupabaseRouteHandlerClient();
+  const supabase = await createSupabaseRouteHandlerClient();
   const {
     data: { user },
     error

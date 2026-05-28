@@ -15,7 +15,7 @@ type Room = {
 };
 
 export default async function RoomsPage() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

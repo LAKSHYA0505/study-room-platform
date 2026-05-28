@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { createSupabaseServerClient } from "@/lib/supabase";
 
 export async function Navbar() {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();

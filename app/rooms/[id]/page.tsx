@@ -3,10 +3,9 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 import { joinRoom, leaveRoom } from "@/app/rooms/actions";
+import { RoomRealtimePanel } from "@/components/rooms/room-realtime-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { createSupabaseServerClient } from "@/lib/supabase";
 
 type RoomPageProps = {
@@ -41,7 +40,7 @@ function getProfile(member: MemberRow) {
 }
 
 export default async function RoomDetailPage({ params, searchParams }: RoomPageProps) {
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
@@ -80,6 +79,12 @@ export default async function RoomDetailPage({ params, searchParams }: RoomPageP
     .eq("room_id", params.id)
     .order("joined_at", { ascending: true });
 
+  const { data: currentProfile } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", user.id)
+    .maybeSingle();
+
   const typedRoom = room as Room;
   const typedMembers = (members ?? []) as unknown as MemberRow[];
   const isMember = typedMembers.some((member) => member.user_id === user.id);
@@ -87,6 +92,15 @@ export default async function RoomDetailPage({ params, searchParams }: RoomPageP
   const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "localhost:3000";
   const protocol = headerStore.get("x-forwarded-proto") ?? "http";
   const inviteUrl = `${protocol}://${host}/rooms/${params.id}?invite=true`;
+  const roomMembers = typedMembers.map((member) => ({
+    userId: member.user_id,
+    username: getProfile(member)?.username ?? "Unknown user"
+  }));
+  const currentUsername =
+    currentProfile?.username ??
+    roomMembers.find((member) => member.userId === user.id)?.username ??
+    user.email?.split("@")[0] ??
+    "You";
 
   return (
     <main className="min-h-screen bg-background">
@@ -121,52 +135,15 @@ export default async function RoomDetailPage({ params, searchParams }: RoomPageP
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <Card>
-            <CardHeader>
-              <CardTitle>Room shell</CardTitle>
-              <CardDescription>Chat and synced Pomodoro controls will live here in the next phases.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
-                Phase 3: real-time chat. Phase 4: synced Pomodoro timer and study tracking.
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Invite link</CardTitle>
-                <CardDescription>Share this URL with classmates to add them to the room.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Input readOnly value={inviteUrl} />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Members</CardTitle>
-                <CardDescription>People currently joined to this study room.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {typedMembers.length ? (
-                  <div className="space-y-3">
-                    {typedMembers.map((member) => (
-                      <div key={member.user_id} className="flex items-center justify-between rounded-md border p-3">
-                        <span className="font-medium">{getProfile(member)?.username ?? "Unknown user"}</span>
-                        {member.user_id === user.id ? <Badge variant="secondary">You</Badge> : null}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No members yet.</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        <RoomRealtimePanel
+          roomId={params.id}
+          inviteUrl={inviteUrl}
+          currentUser={{
+            id: user.id,
+            username: currentUsername
+          }}
+          members={roomMembers}
+        />
       </section>
     </main>
   );

@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import { createBrowserClient, createServerClient, type CookieOptions } from "@supabase/ssr";
 
@@ -29,7 +28,8 @@ export function getSupabaseBrowserClient() {
   return createBrowserClient(config.supabaseUrl, config.supabaseAnonKey);
 }
 
-export function createSupabaseServerClient() {
+export async function createSupabaseServerClient() {
+  const { cookies } = await import("next/headers");
   const config = assertSupabaseConfig();
   const cookieStore = cookies();
 
@@ -42,7 +42,8 @@ export function createSupabaseServerClient() {
   });
 }
 
-export function createSupabaseRouteHandlerClient() {
+export async function createSupabaseRouteHandlerClient() {
+  const { cookies } = await import("next/headers");
   const config = assertSupabaseConfig();
   const cookieStore = cookies();
 

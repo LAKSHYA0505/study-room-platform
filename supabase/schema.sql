@@ -46,3 +46,16 @@ create table if not exists session_participants (
   user_id uuid references profiles(id),
   primary key (session_id, user_id)
 );
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'messages'
+  ) then
+    alter publication supabase_realtime add table messages;
+  end if;
+end $$;

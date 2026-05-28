@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Username, email, and password are required." }, { status: 400 });
   }
 
-  const supabase = createSupabaseRouteHandlerClient();
+  const supabase = await createSupabaseRouteHandlerClient();
   const { data, error: signUpError } = await supabase.auth.signUp({
     email,
     password,
