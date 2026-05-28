@@ -22,6 +22,7 @@ type Room = {
   name: string;
   subject: string | null;
   is_public: boolean | null;
+  created_by: string | null;
 };
 
 type MemberRow = {
@@ -51,7 +52,7 @@ export default async function RoomDetailPage({ params, searchParams }: RoomPageP
 
   const { data: room } = await supabase
     .from("rooms")
-    .select("id, name, subject, is_public")
+    .select("id, name, subject, is_public, created_by")
     .eq("id", params.id)
     .single();
 
@@ -143,6 +144,7 @@ export default async function RoomDetailPage({ params, searchParams }: RoomPageP
             username: currentUsername
           }}
           members={roomMembers}
+          isCreator={typedRoom.created_by === user.id}
         />
       </section>
     </main>

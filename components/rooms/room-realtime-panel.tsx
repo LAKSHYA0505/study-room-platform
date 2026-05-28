@@ -2,6 +2,7 @@
 
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
+import { PomodoroTimer } from "@/components/rooms/pomodoro-timer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +55,7 @@ type RoomRealtimePanelProps = {
   inviteUrl: string;
   currentUser: CurrentUser;
   members: RoomMember[];
+  isCreator: boolean;
 };
 
 function getMessageUsername(message: MessageRow, memberNames: Map<string, string>) {
@@ -69,7 +71,7 @@ function formatMessageTime(timestamp: string) {
   }).format(new Date(timestamp));
 }
 
-export function RoomRealtimePanel({ roomId, inviteUrl, currentUser, members }: RoomRealtimePanelProps) {
+export function RoomRealtimePanel({ roomId, inviteUrl, currentUser, members, isCreator }: RoomRealtimePanelProps) {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
@@ -222,50 +224,54 @@ export function RoomRealtimePanel({ roomId, inviteUrl, currentUser, members }: R
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-      <Card className="min-h-[560px]">
-        <CardHeader>
-          <CardTitle>Chat</CardTitle>
-          <CardDescription>Messages update live for everyone in this room.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex h-[460px] flex-col gap-4">
-          <div className="min-h-0 flex-1 overflow-y-auto rounded-md border bg-background p-4">
-            {messages.length ? (
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <div key={message.id} className="rounded-md border p-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-medium">{message.username}</span>
-                      <span className="text-xs text-muted-foreground">{formatMessageTime(message.created_at)}</span>
+      <div className="space-y-4">
+        <PomodoroTimer roomId={roomId} currentUserId={currentUser.id} isCreator={isCreator} />
+
+        <Card className="min-h-[560px]">
+          <CardHeader>
+            <CardTitle>Chat</CardTitle>
+            <CardDescription>Messages update live for everyone in this room.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex h-[460px] flex-col gap-4">
+            <div className="min-h-0 flex-1 overflow-y-auto rounded-md border bg-background p-4">
+              {messages.length ? (
+                <div className="space-y-4">
+                  {messages.map((message) => (
+                    <div key={message.id} className="rounded-md border p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-medium">{message.username}</span>
+                        <span className="text-xs text-muted-foreground">{formatMessageTime(message.created_at)}</span>
+                      </div>
+                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{message.content}</p>
                     </div>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{message.content}</p>
-                  </div>
-                ))}
-                <div ref={bottomRef} />
-              </div>
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                No messages yet. Start the conversation.
-              </div>
-            )}
-          </div>
+                  ))}
+                  <div ref={bottomRef} />
+                </div>
+              ) : (
+                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                  No messages yet. Start the conversation.
+                </div>
+              )}
+            </div>
 
-          {error ? (
-            <p className="rounded-md border border-destructive/50 p-3 text-sm text-destructive">{error}</p>
-          ) : null}
+            {error ? (
+              <p className="rounded-md border border-destructive/50 p-3 text-sm text-destructive">{error}</p>
+            ) : null}
 
-          <form onSubmit={sendMessage} className="flex gap-2">
-            <Input
-              aria-label="Message"
-              placeholder="Type a message..."
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
-            />
-            <Button type="submit" disabled={isSending || !content.trim()}>
-              Send
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+            <form onSubmit={sendMessage} className="flex gap-2">
+              <Input
+                aria-label="Message"
+                placeholder="Type a message..."
+                value={content}
+                onChange={(event) => setContent(event.target.value)}
+              />
+              <Button type="submit" disabled={isSending || !content.trim()}>
+                Send
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="space-y-4">
         <Card>
