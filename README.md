@@ -16,5 +16,6 @@ Internship assessment project built with Next.js 14, TypeScript, Tailwind CSS, s
 
 1. Copy `.env.local.example` to `.env.local`.
 2. Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-3. Install dependencies with `npm install`.
-4. Run the app with `npm run dev`.
+3. Run the SQL from `supabase/schema.sql` in your Supabase project's SQL Editor.
+4. Install dependencies with `npm install`.
+5. Run the app with `npm run dev`.

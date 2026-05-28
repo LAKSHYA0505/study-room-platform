@@ -2,6 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { createSupabaseRouteHandlerClient } from "@/lib/supabase";
 
+function getProfileCreationErrorMessage(message: string) {
+  if (message.includes("public.profiles")) {
+    return "The Supabase database schema is not set up yet. Run supabase/schema.sql in the Supabase SQL Editor, then try signing up again.";
+  }
+
+  return message;
+}
+
 export async function POST(request: NextRequest) {
   const { username, email, password } = (await request.json()) as {
     username?: string;
@@ -37,7 +45,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (profileError) {
-      return NextResponse.json({ error: profileError.message }, { status: 400 });
+      return NextResponse.json({ error: getProfileCreationErrorMessage(profileError.message) }, { status: 400 });
     }
   }
 
