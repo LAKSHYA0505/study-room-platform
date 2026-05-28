@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -37,6 +37,7 @@ export function AuthForm({
   alternateLabel
 }: AuthFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -59,7 +60,8 @@ export function AuthForm({
         body: JSON.stringify({
           username: username.trim(),
           email,
-          password
+          password,
+          next: searchParams.get("next")
         })
       });
       const result = (await response.json()) as {

@@ -3,9 +3,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createSupabaseRouteHandlerClient } from "@/lib/supabase";
 
 export async function POST(request: NextRequest) {
-  const { email, password } = (await request.json()) as {
+  const { email, password, next } = (await request.json()) as {
     email?: string;
     password?: string;
+    next?: string | null;
   };
 
   if (!email || !password) {
@@ -22,5 +23,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  return NextResponse.json({ redirectTo: "/dashboard" });
+  return NextResponse.json({ redirectTo: next || "/dashboard" });
 }

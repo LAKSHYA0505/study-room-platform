@@ -11,10 +11,11 @@ function getProfileCreationErrorMessage(message: string) {
 }
 
 export async function POST(request: NextRequest) {
-  const { username, email, password } = (await request.json()) as {
+  const { username, email, password, next } = (await request.json()) as {
     username?: string;
     email?: string;
     password?: string;
+    next?: string | null;
   };
   const trimmedUsername = username?.trim();
 
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (data.session) {
-    return NextResponse.json({ redirectTo: "/dashboard" });
+    return NextResponse.json({ redirectTo: next || "/dashboard" });
   }
 
   return NextResponse.json({
