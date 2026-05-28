@@ -5,14 +5,21 @@ import { createBrowserClient, createServerClient, type CookieOptions } from "@su
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+function normalizeSupabaseUrl(url: string) {
+  const parsedUrl = new URL(url.trim());
+  parsedUrl.pathname = parsedUrl.pathname.replace(/\/rest\/v1\/?$/, "");
+
+  return parsedUrl.origin + parsedUrl.pathname.replace(/\/$/, "");
+}
+
 function assertSupabaseConfig() {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error("Missing Supabase environment variables.");
   }
 
   return {
-    supabaseUrl,
-    supabaseAnonKey
+    supabaseUrl: normalizeSupabaseUrl(supabaseUrl),
+    supabaseAnonKey: supabaseAnonKey.trim()
   };
 }
 
