@@ -9,16 +9,20 @@ import { Label } from "@/components/ui/label";
 type CreateRoomPageProps = {
   searchParams?: {
     error?: string;
+    details?: string;
   };
 };
 
 const errorMessages: Record<string, string> = {
   "missing-name": "Room name is required.",
-  "create-failed": "Could not create the room. Check your Supabase schema and try again."
+  "profile-failed": "Could not prepare your profile for room creation.",
+  "create-failed": "Could not create the room.",
+  "member-failed": "The room was created, but adding you as a member failed."
 };
 
 export default function CreateRoomPage({ searchParams }: CreateRoomPageProps) {
   const errorMessage = searchParams?.error ? errorMessages[searchParams.error] : null;
+  const errorDetails = searchParams?.details;
 
   return (
     <main className="min-h-screen bg-background">
@@ -61,7 +65,10 @@ export default function CreateRoomPage({ searchParams }: CreateRoomPageProps) {
                 />
               </label>
               {errorMessage ? (
-                <p className="rounded-md border border-destructive/50 p-3 text-sm text-destructive">{errorMessage}</p>
+                <div className="space-y-2 rounded-md border border-destructive/50 p-3 text-sm text-destructive">
+                  <p>{errorMessage}</p>
+                  {errorDetails ? <p className="font-mono text-xs leading-5">{errorDetails}</p> : null}
+                </div>
               ) : null}
               <Button type="submit" className="w-full sm:w-auto">
                 Create room
