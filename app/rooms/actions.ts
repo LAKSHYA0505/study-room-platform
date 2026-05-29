@@ -54,6 +54,20 @@ async function ensureProfile(supabase: SupabaseServerClient, user: User) {
   return insertError;
 }
 
+async function leaveOtherRooms(supabase: SupabaseServerClient, userId: string, activeRoomId: string) {
+  const { error } = await supabase
+    .from("room_members")
+    .delete()
+    .eq("user_id", userId)
+    .neq("room_id", activeRoomId);
+
+  if (error) {
+    console.error("Failed to leave previous rooms", error);
+  }
+
+  return error;
+}
+
 async function requireUser() {
   const supabase = await createSupabaseRouteHandlerClient();
   const {
@@ -123,6 +137,12 @@ export async function createRoom(formData: FormData) {
     redirectWithRoomError("member-failed", memberError.message);
   }
 
+  const leaveOtherRoomsError = await leaveOtherRooms(supabase, user.id, room.id);
+
+  if (leaveOtherRoomsError) {
+    redirectWithRoomError("member-failed", leaveOtherRoomsError.message);
+  }
+
   revalidatePath("/rooms");
   redirect(`/rooms/${room.id}`);
 }
@@ -150,6 +170,12 @@ export async function joinRoom(roomId: string) {
   if (error) {
     console.error("Failed to join room", error);
     redirect(`/rooms/${roomId}?error=${encodeURIComponent(error.message)}`);
+  }
+
+  const leaveOtherRoomsError = await leaveOtherRooms(supabase, user.id, roomId);
+
+  if (leaveOtherRoomsError) {
+    redirect(`/rooms/${roomId}?error=${encodeURIComponent(leaveOtherRoomsError.message)}`);
   }
 
   revalidatePath("/rooms");

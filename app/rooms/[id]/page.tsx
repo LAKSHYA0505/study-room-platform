@@ -15,6 +15,7 @@ type RoomPageProps = {
   };
   searchParams?: {
     invite?: string;
+    error?: string;
   };
 };
 
@@ -96,7 +97,7 @@ export default async function RoomDetailPage({ params, searchParams }: RoomPageP
   }
 
   if (searchParams?.invite === "true") {
-    await supabase.from("room_members").upsert(
+    const { error: inviteJoinError } = await supabase.from("room_members").upsert(
       {
         room_id: params.id,
         user_id: user.id
@@ -106,6 +107,23 @@ export default async function RoomDetailPage({ params, searchParams }: RoomPageP
         ignoreDuplicates: true
       }
     );
+
+    if (inviteJoinError) {
+      console.error("Failed to join room from invite link", inviteJoinError);
+      redirect(`/rooms/${params.id}?error=${encodeURIComponent(inviteJoinError.message)}`);
+    }
+
+    const { error: leaveOtherRoomsError } = await supabase
+      .from("room_members")
+      .delete()
+      .eq("user_id", user.id)
+      .neq("room_id", params.id);
+
+    if (leaveOtherRoomsError) {
+      console.error("Failed to leave previous rooms from invite link", leaveOtherRoomsError);
+      redirect(`/rooms/${params.id}?error=${encodeURIComponent(leaveOtherRoomsError.message)}`);
+    }
+
     redirect(`/rooms/${params.id}`);
   }
 
@@ -196,6 +214,12 @@ export default async function RoomDetailPage({ params, searchParams }: RoomPageP
             )}
           </div>
         </div>
+
+        {searchParams?.error ? (
+          <p className="rounded-md border border-destructive/50 p-3 text-sm text-destructive">
+            {searchParams.error}
+          </p>
+        ) : null}
 
         <RoomRealtimePanel
           roomId={params.id}
