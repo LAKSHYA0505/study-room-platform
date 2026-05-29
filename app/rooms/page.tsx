@@ -2,18 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { joinRoom } from "@/app/rooms/actions";
-import { Badge } from "@/components/ui/badge";
+import { PublicRoomsList, type PublicRoom } from "@/components/rooms/public-rooms-list";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { createSupabaseServerClient } from "@/lib/supabase";
-
-type Room = {
-  id: string;
-  name: string;
-  subject: string | null;
-  created_at: string;
-};
 
 export const metadata: Metadata = {
   title: "Rooms | Study Room Platform"
@@ -35,7 +26,7 @@ export default async function RoomsPage() {
     .eq("is_public", true)
     .order("created_at", { ascending: false });
 
-  const typedRooms = (rooms ?? []) as Room[];
+  const typedRooms = (rooms ?? []) as PublicRoom[];
   const roomIds = typedRooms.map((room) => room.id);
   const { data: memberRows } = roomIds.length
     ? await supabase.from("room_members").select("room_id").in("room_id", roomIds)
@@ -45,6 +36,7 @@ export default async function RoomsPage() {
   for (const row of memberRows ?? []) {
     memberCounts.set(row.room_id, (memberCounts.get(row.room_id) ?? 0) + 1);
   }
+  const initialMemberCounts = Object.fromEntries(memberCounts);
 
   return (
     <main className="min-h-screen bg-background">
@@ -60,46 +52,7 @@ export default async function RoomsPage() {
           </Button>
         </div>
 
-        {typedRooms.length ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {typedRooms.map((room) => (
-              <Card key={room.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <CardTitle className="text-xl">{room.name}</CardTitle>
-                      <CardDescription className="mt-2">{room.subject || "General study"}</CardDescription>
-                    </div>
-                    <Badge>{memberCounts.get(room.id) ?? 0} members</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">Open this room to see members and the invite link.</p>
-                </CardContent>
-                <CardFooter className="gap-2">
-                  <form action={joinRoom.bind(null, room.id)}>
-                    <Button type="submit">Join</Button>
-                  </form>
-                  <Button asChild variant="outline">
-                    <Link href={`/rooms/${room.id}`}>View</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>No public rooms yet</CardTitle>
-              <CardDescription>Create the first room and invite your study group.</CardDescription>
-            </CardHeader>
-            <CardFooter>
-              <Button asChild>
-                <Link href="/rooms/create">Create room</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-        )}
+        <PublicRoomsList rooms={typedRooms} initialMemberCounts={initialMemberCounts} />
       </section>
     </main>
   );

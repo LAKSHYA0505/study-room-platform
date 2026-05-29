@@ -50,6 +50,18 @@ type MessageRow = {
       }>;
 };
 
+type MemberRow = {
+  user_id: string;
+  profiles:
+    | {
+        username: string;
+      }
+    | null
+    | Array<{
+        username: string;
+      }>;
+};
+
 type PresencePayload = {
   user_id?: string;
   username?: string;
@@ -69,6 +81,12 @@ function getMessageUsername(message: MessageRow, memberNames: Map<string, string
   const profile = Array.isArray(message.profiles) ? message.profiles[0] : message.profiles;
 
   return profile?.username ?? memberNames.get(message.user_id) ?? "Unknown user";
+}
+
+function getMemberUsername(member: MemberRow) {
+  const profile = Array.isArray(member.profiles) ? member.profiles[0] : member.profiles;
+
+  return profile?.username ?? "Unknown user";
 }
 
 function formatMessageTime(timestamp: string) {
@@ -91,6 +109,7 @@ export function RoomRealtimePanel({
   leaderboard
 }: RoomRealtimePanelProps) {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  const [memberList, setMemberList] = useState(members);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
   const [content, setContent] = useState("");
@@ -98,12 +117,46 @@ export function RoomRealtimePanel({
   const [isSending, setIsSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const memberNames = useMemo(
-    () => new Map(members.map((member) => [member.userId, member.username])),
-    [members]
+    () => new Map(memberList.map((member) => [member.userId, member.username])),
+    [memberList]
   );
+  const memberNamesRef = useRef(memberNames);
+
+  useEffect(() => {
+    setMemberList(members);
+  }, [members]);
+
+  useEffect(() => {
+    memberNamesRef.current = memberNames;
+  }, [memberNames]);
 
   useEffect(() => {
     let isMounted = true;
+
+    async function loadMembers() {
+      const { data, error: membersError } = await supabase
+        .from("room_members")
+        .select("user_id, profiles(username)")
+        .eq("room_id", roomId)
+        .order("joined_at", { ascending: true });
+
+      if (!isMounted) {
+        return;
+      }
+
+      if (membersError) {
+        setError(membersError.message);
+        return;
+      }
+
+      const rows = (data ?? []) as unknown as MemberRow[];
+      setMemberList(
+        rows.map((member) => ({
+          userId: member.user_id,
+          username: getMemberUsername(member)
+        }))
+      );
+    }
 
     async function loadMessages() {
       const { data, error: loadError } = await supabase
@@ -129,12 +182,13 @@ export function RoomRealtimePanel({
           user_id: message.user_id,
           content: message.content,
           created_at: message.created_at,
-          username: getMessageUsername(message, memberNames)
+          username: getMessageUsername(message, memberNamesRef.current)
         }))
       );
     }
 
     void loadMessages();
+    void loadMembers();
 
     const channel = supabase.channel(`room:${roomId}`, {
       config: {
@@ -145,6 +199,18 @@ export function RoomRealtimePanel({
     });
 
     channel
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "room_members",
+          filter: `room_id=eq.${roomId}`
+        },
+        () => {
+          void loadMembers();
+        }
+      )
       .on(
         "postgres_changes",
         {
@@ -172,7 +238,7 @@ export function RoomRealtimePanel({
                 username:
                   row.user_id === currentUser.id
                     ? currentUser.username
-                    : memberNames.get(row.user_id) ?? "Unknown user"
+                    : memberNamesRef.current.get(row.user_id) ?? "Unknown user"
               }
             ];
           });
@@ -207,7 +273,7 @@ export function RoomRealtimePanel({
       isMounted = false;
       void supabase.removeChannel(channel);
     };
-  }, [currentUser.id, currentUser.username, memberNames, roomId, supabase]);
+  }, [currentUser.id, currentUser.username, roomId, supabase]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -308,9 +374,9 @@ export function RoomRealtimePanel({
             <CardDescription>People currently joined to this study room.</CardDescription>
           </CardHeader>
           <CardContent>
-            {members.length ? (
+            {memberList.length ? (
               <div className="space-y-3">
-                {members.map((member) => {
+                {memberList.map((member) => {
                   const isOnline = onlineUserIds.has(member.userId);
 
                   return (
