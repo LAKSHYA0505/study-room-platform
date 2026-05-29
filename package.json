@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:clean": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (Test-Path .next) { Remove-Item -Recurse -Force .next }; npm run dev\"",
+    "dev:clean": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (Test-Path .next-dev) { Remove-Item -Recurse -Force .next-dev }; if (Test-Path .next) { Remove-Item -Recurse -Force .next }; npm run dev\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
