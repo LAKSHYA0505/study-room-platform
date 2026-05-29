@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { joinRoom, leaveRoom } from "@/app/rooms/actions";
+import { RoomMemberCountBadge } from "@/components/rooms/room-member-count-badge";
 import { RoomRealtimePanel } from "@/components/rooms/room-realtime-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -194,7 +195,7 @@ export default async function RoomDetailPage({ params, searchParams }: RoomPageP
               <Badge variant={typedRoom.is_public ? "default" : "outline"}>
                 {typedRoom.is_public ? "Public" : "Private"}
               </Badge>
-              <Badge variant="outline">{typedMembers.length} members</Badge>
+              <RoomMemberCountBadge roomId={params.id} initialCount={typedMembers.length} />
             </div>
           </div>
           <div className="flex flex-wrap gap-2">

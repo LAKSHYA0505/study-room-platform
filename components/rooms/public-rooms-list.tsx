@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { joinRoom } from "@/app/rooms/actions";
 import { Badge } from "@/components/ui/badge";
@@ -33,8 +33,27 @@ export function PublicRoomsList({ rooms, initialMemberCounts }: PublicRoomsListP
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [memberCounts, setMemberCounts] = useState(initialMemberCounts);
 
+  const loadMemberCount = useCallback(async (roomId: string) => {
+    const { count, error } = await supabase
+      .from("room_members")
+      .select("*", { count: "exact", head: true })
+      .eq("room_id", roomId);
+
+    if (!error && typeof count === "number") {
+      setMemberCounts((currentCounts) => ({
+        ...currentCounts,
+        [roomId]: count
+      }));
+    }
+  }, [supabase]);
+
   useEffect(() => {
     const roomIds = new Set(rooms.map((room) => room.id));
+
+    roomIds.forEach((roomId) => {
+      void loadMemberCount(roomId);
+    });
+
     const channel = supabase
       .channel("public-room-members")
       .on(
@@ -53,25 +72,7 @@ export function PublicRoomsList({ rooms, initialMemberCounts }: PublicRoomsListP
             return;
           }
 
-          setMemberCounts((currentCounts) => {
-            const currentCount = currentCounts[roomId] ?? 0;
-
-            if (payload.eventType === "INSERT") {
-              return {
-                ...currentCounts,
-                [roomId]: currentCount + 1
-              };
-            }
-
-            if (payload.eventType === "DELETE") {
-              return {
-                ...currentCounts,
-                [roomId]: Math.max(0, currentCount - 1)
-              };
-            }
-
-            return currentCounts;
-          });
+          void loadMemberCount(roomId);
         }
       )
       .subscribe();
@@ -79,7 +80,7 @@ export function PublicRoomsList({ rooms, initialMemberCounts }: PublicRoomsListP
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [rooms, supabase]);
+  }, [loadMemberCount, rooms, supabase]);
 
   if (!rooms.length) {
     return (
